@@ -1,0 +1,66 @@
+server {
+        listen   80; ## listen for ipv4; this line is default and implied
+        #listen   [::]:80 default ipv6only=on; ## listen for ipv6
+
+        root /var/www/domain;
+        index index.html index.htm index.php;
+
+        # Make site accessible from http://localhost/
+        server_name domain;
+
+        location / {
+                # First attempt to serve request as file, then
+                # as directory, then fall back to index.html
+                #try_files $uri $uri/ /index.html;
+                try_files $uri $uri/ /index.php?$args;
+                # Uncomment to enable naxsi on this location
+                # include /etc/nginx/naxsi.rules
+        }
+        location ~ \.php$ {
+           fastcgi_pass    127.0.0.1:9000;
+            fastcgi_index   index.php;
+            fastcgi_param   SCRIPT_FILENAME /var/www/nginx-default$fastcgi_script_name;
+                    include         fastcgi_params;
+        }
+
+        location /doc/ {
+                alias /usr/share/doc/;
+                autoindex on;
+                allow 127.0.0.1;
+                deny all;
+        }
+
+
+
+        #W3 TOTAL CACHE CHECK
+        set $cache_uri $request_uri;
+
+        # POST requests and urls with a query string should always go to PHP
+        if ($request_method = POST) {
+                set $cache_uri 'null cache';
+        }
+
+        if ($query_string != "") {
+                set $cache_uri 'null cache';
+
+        }
+
+        # Don't cache uris containing the following segments
+        if ($request_uri ~* "(/wp-admin/|/xmlrpc.php|/wp-(app|cron|login|register|mail).php|wp-.*.php|/feed/|index.php|wp-comments-popup.php|wp-links-opml.php|wp-locations.php|sitemap(_index)?.xml|[a-z0-9_-]+-sitemap([0-9]+)?.xml)") {
+                set $cache_uri 'null cache';
+        }
+
+        # Don't use the cache for logged in users or recent commenters
+        if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_logged_in") {
+                set $cache_uri 'null cache';
+        }
+
+        #ADD mobile rules from WP SUPER CACHE section above
+
+        #APPEND A CODE BLOCK FROM BELOW...
+
+
+
+
+}
+
